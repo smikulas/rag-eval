@@ -6,12 +6,13 @@ Initial modules for a Python-based evaluation framework targeting OpenWebUI Retr
 
 This project builds a structured and reproducible evaluation pipeline for OpenWebUI’s built-in RAG system.
 
-The current implementation focuses on two foundational layers:
+The current implementation focuses on three foundational layers:
 
 1. **OpenWebUI integration layer**
 2. **Dataset modeling and loading layer**
+3. **Metrics layer for retrieval and generation**
 
-These provide the basis for later evaluation metrics, experiment sweeps, and result analysis.
+These provide the basis for later experiment sweeps, and result analysis.
 
 ## Implemented Components
 
@@ -121,6 +122,74 @@ Key idea:
 - URLs and chunk filenames are mapped to the same canonical key
 - matching is performed at **document level**, not chunk level
 
+## 3. Metrics Layer
+
+This module introduces evaluation metrics for both retrieval and generation quality.
+
+The design separates these concerns to ensure clear analysis of:
+- whether the correct information was retrieved
+- whether the model produced a correct and grounded answer
+
+### Retrieval Metrics
+
+#### `models/retrieval_metric_result.py`
+
+Defines the structured output for retrieval evaluation.
+
+Fields:
+- `hit_at_k`: float (1.0 if relevant document is found in top-k, else 0.0)
+- `first_relevant_rank`: rank of the first relevant retrieved chunk (or `None`)
+
+#### `metrics/retrieval_metrics.py`
+
+Provides retrieval evaluation logic.
+
+Responsibilities:
+- compares retrieved chunks against expected documents
+- uses normalized document keys for matching
+- computes:
+  - **hit@k**: whether any relevant document appears in top-k
+  - **first relevant rank**: position of the first correct chunk
+
+Design notes:
+- matching is done at **document level**, not chunk level
+- relies on `document_keys.py` to ensure consistent mapping
+- returns a structured `RetrievalMetricResult`
+
+### Generation Metrics
+
+#### `models/generation_metric_result.py`
+
+Defines the structured output for generation evaluation.
+
+Fields:
+- `exact_match`: strict string match
+- `normalized_exact_match`: match after normalization
+- `token_f1`: token-level F1 score
+- `faithfulness_overlap`: fraction of answer tokens supported by retrieved context
+
+#### `metrics/generation_metrics.py`
+
+Provides generation quality evaluation.
+
+Responsibilities:
+- compares model answer against ground truth
+- evaluates lexical similarity
+- measures grounding against retrieved chunks
+
+Metrics:
+- **exact match**: strict equality
+- **normalized exact match**: case/format insensitive comparison
+- **token F1**: overlap between answer and ground truth tokens
+- **faithfulness overlap**:
+  - measures how much of the answer is supported by retrieved context
+  - approximates hallucination detection
+
+Design notes:
+- normalization includes lowercasing, punctuation removal, and whitespace cleanup
+- tokenization is simple and language-agnostic
+- metrics are intentionally lightweight and fast
+
 ### Current Architecture
 
 ```text
@@ -145,3 +214,9 @@ DatasetLoader
 EvaluationSample
     -> represents one evaluation case
     -> contains normalized document references
+
+RetrievalMetrics
+    -> evaluates retrieval quality
+
+GenerationMetrics
+    -> evaluates retrieval quality
