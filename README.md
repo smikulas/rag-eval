@@ -190,6 +190,62 @@ Design notes:
 - tokenization is simple and language-agnostic
 - metrics are intentionally lightweight and fast
 
+## 4. Evaluation Layer
+
+This module introduces the end-to-end evaluation pipeline, combining dataset samples, OpenWebUI responses, and metrics into structured results.
+
+### Evaluation Runner
+
+#### `runners/evaluation_runner.py`
+
+EvaluationRunner
+- orchestrates the full evaluation process
+- executes queries against OpenWebUI
+- computes retrieval and generation metrics per sample
+- measures latency per request
+
+Responsibilities:
+- iterates over dataset samples
+- calls `OpenWebUIClient`
+- parses responses into `ChatResponse`
+- computes:
+  - `RetrievalMetrics`
+  - `GenerationMetrics`
+- produces structured `EvaluationResult` objects
+
+Supports:
+- single-sample evaluation (debugging)
+- full dataset evaluation
+
+### Evaluation Result Models
+
+#### `models/evaluation_result.py`
+
+EvaluationResult
+- represents the result of one evaluated sample
+- contains:
+  - input sample
+  - model response
+  - retrieval metrics
+  - generation metrics
+  - latency
+  - experiment metadata
+
+#### `models/evaluation_summary.py`
+
+EvaluationSummary
+- represents aggregated metrics across all samples
+- contains:
+  - total samples
+  - retrieval hit rate
+  - mean first relevant rank
+  - generation metric aggregates
+  - latency statistics
+
+Purpose:
+- enables comparison between experiments
+- provides a concise overview for reporting
+
 ### Current Architecture
 
 ```text
@@ -220,3 +276,6 @@ RetrievalMetrics
 
 GenerationMetrics
     -> evaluates retrieval quality
+
+EvaluationSummary
+    -> evaluation runner
