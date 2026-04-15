@@ -11,6 +11,8 @@ The current implementation focuses on three foundational layers:
 1. **OpenWebUI integration layer**
 2. **Dataset modeling and loading layer**
 3. **Metrics layer for retrieval and generation**
+4. **Evaluation layer**
+5. **Storage layer**
 
 These provide the basis for later experiment sweeps, and result analysis.
 
@@ -246,6 +248,36 @@ Purpose:
 - enables comparison between experiments
 - provides a concise overview for reporting
 
+## 5. Storage Layer
+
+This module provides structured persistence for evaluation results.
+
+### Serialization
+
+#### `utils/serialization.py`
+
+Provides utilities to convert dataclass-based objects into JSON-compatible dictionaries.
+
+Responsibilities:
+- converts nested dataclasses using `asdict`
+- ensures compatibility with JSON/JSONL output
+
+### Result Writer
+
+#### `storage/result_writer.py`
+
+ResultWriter
+- persists evaluation outputs to disk
+- supports:
+  - JSON (full results)
+  - JSONL (streaming / large datasets)
+  - summary JSON
+
+Responsibilities:
+- writes per-sample `EvaluationResult`
+- writes aggregated `EvaluationSummary`
+- ensures output directories exist
+
 ### Current Architecture
 
 ```text
@@ -279,3 +311,6 @@ GenerationMetrics
 
 EvaluationSummary
     -> evaluation runner
+
+ResultWriter
+    -> JSON / JSONL outputs
