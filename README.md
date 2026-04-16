@@ -14,6 +14,7 @@ The current implementation focuses on three foundational layers:
 4. **Evaluation layer**
 5. **Storage layer**
 6. **Configuration layer**
+7. **Experiment execution**
 
 These provide the basis for later experiment sweeps, and result analysis.
 
@@ -339,6 +340,25 @@ OpenWebUIConfigClient
 
 Purpose:
 - ensures experiment settings are applied before evaluation
+
+## 7. Experiment Execution
+
+This module connects all components into a full evaluation workflow.
+
+### Experiment Runner
+
+#### `runners/run_experiment.py`
+
+run_experiment
+- executes one full experiment
+
+Workflow:
+1. load experiment config
+2. load dataset
+3. update OpenWebUI retrieval config
+4. run evaluation over dataset
+5. compute summary
+6. store results and summary
 
 ### Current Architecture
 
