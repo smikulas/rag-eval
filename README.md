@@ -15,6 +15,8 @@ The current implementation focuses on three foundational layers:
 5. **Storage layer**
 6. **Configuration layer**
 7. **Experiment execution**
+8. **Experiment sweep**
+9. **Reporting layer**
 
 These provide the basis for later experiment sweeps, and result analysis.
 
@@ -360,6 +362,87 @@ Workflow:
 5. compute summary
 6. store results and summary
 
+## 8. Experiment Sweep Layer
+
+This module enables running multiple experiments sequentially and comparing their results.
+
+### Sweep Runner
+
+#### `runners/experiment_sweep_runner.py`
+
+run_experiment_sweep
+- executes multiple experiments in sequence
+- applies each experiment configuration
+- runs evaluation on the same dataset
+- stores per-experiment results and summaries
+
+Workflow:
+1. load dataset once
+2. iterate over experiment configs
+3. update OpenWebUI retrieval settings per experiment
+4. run evaluation
+5. store results and summary
+6. collect summaries for comparison
+
+Purpose:
+- enables controlled experiments (e.g. reranker on/off, different top_k)
+- ensures consistent evaluation across configurations
+
+## 9. Reporting Layer
+
+This module aggregates and compares experiment results.
+
+### Sweep Summary Models
+
+#### `models/sweep_summary_record.py`
+
+SweepSummaryRecord
+- represents summary metrics for one experiment
+- contains:
+  - experiment name
+  - retrieval metrics
+  - generation metrics
+  - latency statistics
+
+#### `models/sweep_report.py`
+
+SweepReport
+- represents comparison across multiple experiments
+- contains:
+  - list of experiment records
+  - best retrieval experiment
+  - best generation experiment
+  - fastest experiment
+
+### Report Builder
+
+#### `reporting/sweep_report_builder.py`
+
+SweepReportBuilder
+- builds a comparison report from multiple `EvaluationSummary`
+- identifies:
+  - best retrieval experiment (highest hit rate / best rank)
+  - best generation experiment (accuracy + quality metrics)
+  - fastest experiment (lowest latency)
+
+Purpose:
+- provides structured comparison logic
+- separates evaluation from reporting
+
+### Report Writer
+
+#### `reporting/report_writer.py`
+
+ReportWriter
+- persists sweep comparison results
+- supports:
+  - JSON (machine-readable)
+  - Markdown (human-readable)
+
+Outputs:
+- `sweep_report.json`
+- `sweep_report.md`
+
 ### Current Architecture
 
 ```text
@@ -405,3 +488,13 @@ RetrievalConfigMapper
 
 OpenWebUIConfigClient
     -> applies retrieval settings
+
+run_experiment_sweep
+    -> multiple EvaluationRunner executions
+    -> multiple EvaluationSummary
+
+SweepReportBuilder
+    -> SweepReport
+
+ReportWriter
+    -> JSON / Markdown reports
