@@ -13,6 +13,7 @@ The current implementation focuses on three foundational layers:
 3. **Metrics layer for retrieval and generation**
 4. **Evaluation layer**
 5. **Storage layer**
+6. **Configuration layer**
 
 These provide the basis for later experiment sweeps, and result analysis.
 
@@ -278,6 +279,67 @@ Responsibilities:
 - writes aggregated `EvaluationSummary`
 - ensures output directories exist
 
+## 6. Configuration Layer
+
+This module introduces experiment configuration management, enabling reproducible and configurable evaluation runs.
+
+### Experiment Configuration
+
+#### `models/experiment_config.py`
+
+ExperimentConfig
+- represents one evaluation experiment
+- defines:
+  - model to use
+  - collection to query
+  - generation parameters (temperature, max_tokens)
+  - retrieval evaluation parameter (retrieval_k)
+  - output configuration (directory, tag)
+  - optional chat history
+  - retrieval settings for OpenWebUI
+
+Purpose:
+- provides a single source of truth for one experiment
+- enables reproducibility and comparison across runs
+
+### Config Loader
+
+#### `config/config_loader.py`
+
+ConfigLoader
+- loads experiment configuration from YAML
+- validates required fields
+- converts raw YAML into `ExperimentConfig`
+
+Supports:
+- simple scalar parameters
+- nested `retrieval_settings` for OpenWebUI
+
+### Retrieval Config Mapping
+
+#### `config/retrieval_config_mapper.py`
+
+RetrievalConfigMapper
+- converts `ExperimentConfig` into OpenWebUI retrieval config payload
+- filters only supported keys
+- prepares update payload for `/api/v1/retrieval/config`
+
+Purpose:
+- bridges evaluation config and OpenWebUI runtime configuration
+
+### OpenWebUI Config Client
+
+#### `clients/openwebui_config_client.py`
+
+OpenWebUIConfigClient
+- interacts with OpenWebUI retrieval configuration API
+- supports:
+  - reading current config
+  - updating config via API
+
+Purpose:
+- ensures experiment settings are applied before evaluation
+
 ### Current Architecture
 
 ```text
@@ -314,3 +376,12 @@ EvaluationSummary
 
 ResultWriter
     -> JSON / JSONL outputs
+
+ConfigLoader
+    -> ExperimentConfig
+
+RetrievalConfigMapper
+    -> OpenWebUI config payload
+
+OpenWebUIConfigClient
+    -> applies retrieval settings
