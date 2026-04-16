@@ -11,6 +11,8 @@ from rag_eval.datasets.dataset_loader import DatasetLoader
 from rag_eval.models.evaluation_summary import EvaluationSummary
 from rag_eval.runners.evaluation_runner import EvaluationRunner
 from rag_eval.storage.result_writer import ResultWriter
+from rag_eval.reporting.report_writer import ReportWriter
+from rag_eval.reporting.sweep_report_builder import SweepReportBuilder
 
 def run_experiment_sweep(
     *,
@@ -75,6 +77,19 @@ def run_experiment_sweep(
         ResultWriter.write_summary(
             summary,
             output_dir / f"{experiment.name}{suffix}_summary.json",
+        )
+    
+    if summaries:
+        report = SweepReportBuilder.build(summaries)
+
+        base_output_dir = Path("outputs")
+        ReportWriter.write_json(
+            report,
+            base_output_dir / "sweep_report.json",
+        )
+        ReportWriter.write_markdown(
+            report,
+            base_output_dir / "sweep_report.md",
         )
 
     return summaries
